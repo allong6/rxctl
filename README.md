@@ -64,6 +64,18 @@ go install github.com/allong6/rxctl/cmd/rxctl@latest    # → $GOPATH/bin/rxctl
 sudo install -m 0755 "$(go env GOPATH)/bin/rxctl" /usr/local/bin/rxctl
 ```
 
+**方式 D：从 GitHub Release 下载**（仓库 private，需先 `gh auth login`）
+
+```bash
+gh release download v0.4.5 -R allong6/rxctl \
+  -p 'rxctl-linux-amd64' -p 'SHA256SUMS'
+sha256sum -c SHA256SUMS
+sudo install -m 0755 rxctl-linux-amd64 /usr/local/bin/rxctl
+```
+
+Release 资产：`rxctl-linux-amd64`（x86_64）、`rxctl-linux-arm64`（aarch64）、
+`rxctl-linux-armv7`（armhf/armv7）、`SHA256SUMS`。
+
 **可选：让 `sudo rxctl` 直接可用**
 
 ```bash
@@ -428,6 +440,7 @@ make build            # 本机 → bin/rxctl
 make cross            # Linux amd64/arm64、macOS arm64、Windows amd64 → dist/
 make test             # go test ./...
 make vet              # go vet ./...
+make release          # Linux amd64/arm64/armv7 → dist/ + SHA256SUMS
 ```
 
 或直接：
