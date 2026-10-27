@@ -1,0 +1,51 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+
+      - name: test
+        run: go test ./...
+
+      - name: build
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          ver="${GITHUB_REF_NAME#v}"
+          commit="${GITHUB_SHA::7}"
+          date="$(date -u +%F)"
+          ld="-s -w -X main.version=${ver} -X main.commit=${commit} -X main.build=${date}"
+
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -trimpath -ldflags "$ld" -o dist/rxctl-linux-amd64 ./cmd/rxctl
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
+            go build -trimpath -ldflags "$ld" -o dist/rxctl-linux-arm64 ./cmd/rxctl
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 \
+            go build -trimpath -ldflags "$ld" -o dist/rxctl-linux-armv7 ./cmd/rxctl
+
+          cd dist && sha256sum rxctl-linux-* > SHA256SUMS
+
+      - name: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --title "rxctl ${GITHUB_REF_NAME}" \
+            --generate-notes

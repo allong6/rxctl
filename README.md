@@ -10,7 +10,7 @@
 | `tcp` | VLESS + Reality | sing-box `vless` 入站 | UUID | 不需要 | TCP |
 | `udp` | Hysteria2（QUIC） | sing-box `hysteria2` 入站 | 口令（可选 obfs） | 自签 | UDP |
 
-> 状态：**M1 + M2 完成**（v0.4.6）。M3（配置中心/自更新）未开始，见 [docs/DESIGN.md](docs/DESIGN.md)。
+> 状态：**M1 + M2 完成**（v0.4.7）。M3（配置中心/自更新）未开始，见 [docs/DESIGN.md](docs/DESIGN.md)。
 
 ---
 
@@ -67,7 +67,7 @@ sudo install -m 0755 "$(go env GOPATH)/bin/rxctl" /usr/local/bin/rxctl
 **方式 D：从 GitHub Release 下载**（仓库 private，需先 `gh auth login`）
 
 ```bash
-gh release download v0.4.6 -R allong6/rxctl \
+gh release download v0.4.7 -R allong6/rxctl \
   -p 'rxctl-linux-amd64' -p 'SHA256SUMS'
 sha256sum -c SHA256SUMS
 sudo install -m 0755 rxctl-linux-amd64 /usr/local/bin/rxctl
@@ -342,7 +342,7 @@ sudo rxctl uninstall all --purge    # 两套全清；保留 sing-box 二进制�
 ### 3.12 `version` / `help` / `completion`
 
 ```bash
-rxctl -V                  # 单行：rxctl 0.4.6 (linux/amd64)
+rxctl -V                  # 单行：rxctl 0.4.7 (linux/amd64)
 rxctl version             # 构建信息 + sing-box 版本/路径
 rxctl help user           # 子命令帮助
 rxctl completion bash     # 补全脚本（bash/zsh/fish/powershell）
@@ -459,7 +459,7 @@ make release          # Linux amd64/arm64/armv7 → dist/ + SHA256SUMS
 或直接：
 
 ```bash
-CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=0.4.6" -o rxctl ./cmd/rxctl
+CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=0.4.7" -o rxctl ./cmd/rxctl
 ```
 
 安装到 `$GOPATH/bin`（仓库 public 时）：
@@ -467,6 +467,18 @@ CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=0.4.6" -o rxctl
 ```bash
 go install github.com/allong6/rxctl/cmd/rxctl@latest
 ```
+
+### 8.1 发布（自动）
+
+推一个 tag 即可，GitHub Actions（`.github/workflows/release.yml`）会自动：
+测试 → 构建 linux amd64/arm64/armv7 → 生成 `SHA256SUMS` → 创建 Release。
+
+```bash
+git tag -a v0.4.7 -m "rxctl v0.4.7"
+git push origin v0.4.7
+```
+
+也可以在本地先验证产物：`make release`（只构建，不发布）。
 
 目录结构：
 
