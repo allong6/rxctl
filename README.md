@@ -1,5 +1,8 @@
 # rxctl
 
+[![ci](https://github.com/allong6/rxctl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/allong6/rxctl/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 代理出口服务器管理工具：**一个静态二进制**（Go，无运行时依赖）管完
 **安装 → 用户/端口/配额 → 链接/二维码 → 自检 → 自愈 → 卸载**。
 
