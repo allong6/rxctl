@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache: true
+
+      - name: gofmt
+        run: |
+          fmt=$(gofmt -l .)
+          if [ -n "$fmt" ]; then
+            echo "以下文件未格式化："
+            echo "$fmt"
+            exit 1
+          fi
+
+      - name: vet
+        run: go vet ./...
+
+      - name: test
+        run: go test ./...
+
+      - name: build (linux amd64)
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o /tmp/rxctl ./cmd/rxctl
+
+      - name: build (linux arm64)
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -o /tmp/rxctl-arm64 ./cmd/rxctl
+
+      - name: build (linux armv7)
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -trimpath -o /tmp/rxctl-armv7 ./cmd/rxctl
