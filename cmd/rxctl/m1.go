@@ -96,6 +96,12 @@ func cmdInstall(rest []string) int {
 		return 0
 	}
 	if ok > 0 {
+		// 让 `sudo rxctl` 可用（只在 sudo 找不到时补软链；失败不影响安装）
+		if lr := engine.EnsureSelfLink(selfPath()); lr.Created {
+			fmt.Println("sudo 入口:", lr.Path, "（已创建）")
+		} else if lr.Note != "" && strings.Contains(lr.Note, "手工") {
+			fmt.Println("提示:", lr.Note)
+		}
 		fmt.Println("\n下一步: rxctl links        # 取客户端链接")
 		fmt.Println("         rxctl selftest     # 真实出网自检")
 	}
@@ -834,6 +840,11 @@ func cmdUninstall(rest []string) int {
 		return fail(err.Error())
 	}
 	fmt.Println("OK 已卸载:", scheme)
+	if scheme == "all" && *purge {
+		if lr := engine.RemoveSelfLink(selfPath()); lr.Path != "" {
+			fmt.Println("OK 已移除 sudo 入口:", lr.Path, "（二进制仍保留，可用绝对路径运行）")
+		}
+	}
 	return 0
 }
 

@@ -10,7 +10,7 @@
 | `tcp` | VLESS + Reality | sing-box `vless` 入站 | UUID | 不需要 | TCP |
 | `udp` | Hysteria2（QUIC） | sing-box `hysteria2` 入站 | 口令（可选 obfs） | 自签 | UDP |
 
-> 状态：**M1 + M2 完成**（v0.4.5）。M3（配置中心/自更新）未开始，见 [docs/DESIGN.md](docs/DESIGN.md)。
+> 状态：**M1 + M2 完成**（v0.4.6）。M3（配置中心/自更新）未开始，见 [docs/DESIGN.md](docs/DESIGN.md)。
 
 ---
 
@@ -67,7 +67,7 @@ sudo install -m 0755 "$(go env GOPATH)/bin/rxctl" /usr/local/bin/rxctl
 **方式 D：从 GitHub Release 下载**（仓库 private，需先 `gh auth login`）
 
 ```bash
-gh release download v0.4.5 -R allong6/rxctl \
+gh release download v0.4.6 -R allong6/rxctl \
   -p 'rxctl-linux-amd64' -p 'SHA256SUMS'
 sha256sum -c SHA256SUMS
 sudo install -m 0755 rxctl-linux-amd64 /usr/local/bin/rxctl
@@ -76,7 +76,20 @@ sudo install -m 0755 rxctl-linux-amd64 /usr/local/bin/rxctl
 Release 资产：`rxctl-linux-amd64`（x86_64）、`rxctl-linux-arm64`（aarch64）、
 `rxctl-linux-armv7`（armhf/armv7）、`SHA256SUMS`。
 
-**可选：让 `sudo rxctl` 直接可用**
+**sudo 入口（`install` 自动处理）**
+
+`rxctl install …` 会先判断 `sudo` 能否找到 `rxctl`：
+
+```bash
+sudo -n sh -c 'command -v rxctl'
+```
+
+- 能找到 → 不动；
+- 找不到 → 解析 sudo 的 `secure_path`，挑一个可写目录建 `/usr/bin/rxctl` 软链；
+- 目标已存在（普通文件 / 指向别处）→ **不覆盖**，只提示。
+
+`rxctl uninstall all --purge` 会删除**指向本二进制**的这条软链（二进制本身保留）。
+手工兜底：
 
 ```bash
 sudo ln -sf /usr/local/bin/rxctl /usr/bin/rxctl   # /usr/bin 在 sudo secure_path 里
@@ -87,7 +100,7 @@ sudo ln -sf /usr/local/bin/rxctl /usr/bin/rxctl   # /usr/bin 在 sudo secure_pat
 | 路径 | 谁创建 | 说明 |
 |---|---|---|
 | `/usr/local/bin/rxctl` | 你 | 二进制（**建议固定这里**；`agent install` 会把绝对路径写进 unit） |
-| `/usr/bin/rxctl` | 你（可选） | 指向 `/usr/local/bin/rxctl` 的软链，只为 `sudo rxctl` 方便 |
+| `/usr/bin/rxctl` | `rxctl install`（必要时） | 指向 `/usr/local/bin/rxctl` 的软链，只为 `sudo rxctl` 方便；`uninstall all --purge` 会移除 |
 | `/etc/reality-exit/` | `rxctl install tcp` | `meta.env` / `users.tsv` / `config.json` / `usage.tsv`（700 / 600） |
 | `/etc/hy/` | `rxctl install udp` | 自签证书 + UDP 配置（700 / 600） |
 | `/var/lib/rxctl/agent.json` | `rxctl agent` | 上次执行、错误、端口、自愈次数、最近用量（600） |
@@ -329,7 +342,7 @@ sudo rxctl uninstall all --purge    # 两套全清；保留 sing-box 二进制�
 ### 3.12 `version` / `help` / `completion`
 
 ```bash
-rxctl -V                  # 单行：rxctl 0.4.5 (linux/amd64)
+rxctl -V                  # 单行：rxctl 0.4.6 (linux/amd64)
 rxctl version             # 构建信息 + sing-box 版本/路径
 rxctl help user           # 子命令帮助
 rxctl completion bash     # 补全脚本（bash/zsh/fish/powershell）
@@ -446,7 +459,7 @@ make release          # Linux amd64/arm64/armv7 → dist/ + SHA256SUMS
 或直接：
 
 ```bash
-CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=0.4.5" -o rxctl ./cmd/rxctl
+CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=0.4.6" -o rxctl ./cmd/rxctl
 ```
 
 安装到 `$GOPATH/bin`（仓库 public 时）：
