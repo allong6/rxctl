@@ -6,7 +6,7 @@ package qrcode
 import (
 	"log"
 
-	bitset "rxctl/internal/qr/bitset"
+	bitset "github.com/allong6/rxctl/internal/qr/bitset"
 )
 
 // Error detection/recovery capacity.

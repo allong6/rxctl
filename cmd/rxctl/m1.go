@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"rxctl/internal/check"
-	"rxctl/internal/engine"
-	"rxctl/internal/links"
-	qr "rxctl/internal/qr"
-	"rxctl/internal/state"
-	"rxctl/internal/ui"
+	"github.com/allong6/rxctl/internal/check"
+	"github.com/allong6/rxctl/internal/engine"
+	"github.com/allong6/rxctl/internal/links"
+	qr "github.com/allong6/rxctl/internal/qr"
+	"github.com/allong6/rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/ui"
 )
 
 // ---------- install ----------

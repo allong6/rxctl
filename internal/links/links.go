@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/state"
 )
 
 // Vless 生成 vless:// 链接。

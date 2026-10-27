@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/state"
 )
 
 func TestVless(t *testing.T) {

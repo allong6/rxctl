@@ -4,7 +4,7 @@
 package qrcode
 
 import (
-	bitset "rxctl/internal/qr/bitset"
+	bitset "github.com/allong6/rxctl/internal/qr/bitset"
 )
 
 type regularSymbol struct {

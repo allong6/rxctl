@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	bitset "rxctl/internal/qr/bitset"
+	bitset "github.com/allong6/rxctl/internal/qr/bitset"
 )
 
 // gfPoly is a polynomial over GF(2^8).

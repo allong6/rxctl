@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"rxctl/internal/check"
-	"rxctl/internal/engine"
-	"rxctl/internal/state"
-	"rxctl/internal/ui"
+	"github.com/allong6/rxctl/internal/check"
+	"github.com/allong6/rxctl/internal/engine"
+	"github.com/allong6/rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/ui"
 )
 
 // agentState 是 agent 的本地状态（也是 M2 的"上报"落点：先落盘，M3 再接配置中心）。

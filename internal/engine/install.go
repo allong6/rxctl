@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"rxctl/internal/check"
-	"rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/check"
+	"github.com/allong6/rxctl/internal/state"
 )
 
 func sp(rel string) string { return state.Path(rel) }

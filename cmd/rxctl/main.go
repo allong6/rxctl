@@ -9,11 +9,11 @@ import (
 	"runtime"
 	"strings"
 
-	"rxctl/internal/check"
-	"rxctl/internal/engine"
-	"rxctl/internal/links"
-	"rxctl/internal/state"
-	"rxctl/internal/ui"
+	"github.com/allong6/rxctl/internal/check"
+	"github.com/allong6/rxctl/internal/engine"
+	"github.com/allong6/rxctl/internal/links"
+	"github.com/allong6/rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/ui"
 )
 
 // 由 -ldflags 注入

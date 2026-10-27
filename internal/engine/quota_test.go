@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/state"
 )
 
 func TestAccumulateFresh(t *testing.T) {

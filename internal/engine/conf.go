@@ -5,7 +5,7 @@ import (
 	"os"
 	"sort"
 
-	"rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/state"
 )
 
 // tcpInbound 按端口分组建 TCP 入站。

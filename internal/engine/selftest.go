@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"rxctl/internal/check"
-	"rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/check"
+	"github.com/allong6/rxctl/internal/state"
 )
 
 // SelfTestResult 是一次真实出网自检的结果。

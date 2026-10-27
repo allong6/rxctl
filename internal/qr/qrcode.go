@@ -60,8 +60,8 @@ import (
 	"log"
 	"os"
 
-	bitset "rxctl/internal/qr/bitset"
-	reedsolomon "rxctl/internal/qr/reedsolomon"
+	bitset "github.com/allong6/rxctl/internal/qr/bitset"
+	reedsolomon "github.com/allong6/rxctl/internal/qr/reedsolomon"
 )
 
 // Encode a QR Code and return a raw PNG image.

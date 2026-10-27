@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"rxctl/internal/check"
+	"github.com/allong6/rxctl/internal/check"
 )
 
 const (

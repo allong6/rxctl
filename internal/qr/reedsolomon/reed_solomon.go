@@ -13,7 +13,7 @@ package reedsolomon
 import (
 	"log"
 
-	bitset "rxctl/internal/qr/bitset"
+	bitset "github.com/allong6/rxctl/internal/qr/bitset"
 )
 
 // Encode data for QR Code 2005 using the appropriate Reed-Solomon code.

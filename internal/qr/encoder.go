@@ -7,7 +7,7 @@ import (
 	"errors"
 	"log"
 
-	bitset "rxctl/internal/qr/bitset"
+	bitset "github.com/allong6/rxctl/internal/qr/bitset"
 )
 
 // Data encoding.

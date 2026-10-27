@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/state"
 )
 
 func toI64(s string) int64 { return parseInt64(s) }

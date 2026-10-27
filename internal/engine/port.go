@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"rxctl/internal/state"
+	"github.com/allong6/rxctl/internal/state"
 )
 
 // ChangePort 修改某方案的默认端口。

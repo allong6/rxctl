@@ -10,7 +10,7 @@
 | `tcp` | VLESS + Reality | sing-box `vless` 入站 | UUID | 不需要 | TCP |
 | `udp` | Hysteria2（QUIC） | sing-box `hysteria2` 入站 | 口令（可选 obfs） | 自签 | UDP |
 
-> 状态：**M1 + M2 完成**（v0.4.4）。M3（配置中心/自更新）未开始，见 [docs/DESIGN.md](docs/DESIGN.md)。
+> 状态：**M1 + M2 完成**（v0.4.5）。M3（配置中心/自更新）未开始，见 [docs/DESIGN.md](docs/DESIGN.md)。
 
 ---
 
@@ -31,6 +31,60 @@ sudo rxctl agent install    # 常驻：定时统计 + 服务自愈（替代 cron
 > 不用 sudo 时会明确提示"需要 root"，不会误报"未安装"。
 > 若 `sudo rxctl` 报 `command not found`（CentOS 的 sudo `secure_path` 不含 `/usr/local/bin`），
 > 用绝对路径 `sudo /usr/local/bin/rxctl …`；已建 `/usr/bin/rxctl` 软链时 `sudo rxctl` 可直接用。
+
+### 1.1 先把 rxctl 放到服务器上（安装 / 位置）
+
+rxctl 是**单个静态二进制**，没有安装包、没有运行时依赖。推荐固定放在 **`/usr/local/bin/rxctl`**。
+
+**方式 A：本地交叉编译后拷过去**（最常用）
+
+```bash
+# 构建机（Linux/macOS/Windows 均可）
+make cross                    # 产出 dist/rxctl-linux-amd64 等
+# 或只编一个
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
+  -ldflags "-s -w" -o dist/rxctl-linux-amd64 ./cmd/rxctl
+
+scp dist/rxctl-linux-amd64 root@<服务器>:/usr/local/bin/rxctl
+ssh root@<服务器> 'chmod 755 /usr/local/bin/rxctl && rxctl -V'
+```
+
+**方式 B：直接在服务器上构建**
+
+```bash
+git clone https://github.com/allong6/rxctl.git
+cd rxctl
+CGO_ENABLED=0 go build -trimpath -o /usr/local/bin/rxctl ./cmd/rxctl
+```
+
+**方式 C：`go install`（需要仓库是 public）**
+
+```bash
+go install github.com/allong6/rxctl/cmd/rxctl@latest    # → $GOPATH/bin/rxctl
+sudo install -m 0755 "$(go env GOPATH)/bin/rxctl" /usr/local/bin/rxctl
+```
+
+**可选：让 `sudo rxctl` 直接可用**
+
+```bash
+sudo ln -sf /usr/local/bin/rxctl /usr/bin/rxctl   # /usr/bin 在 sudo secure_path 里
+```
+
+**它会往哪里写东西**
+
+| 路径 | 谁创建 | 说明 |
+|---|---|---|
+| `/usr/local/bin/rxctl` | 你 | 二进制（**建议固定这里**；`agent install` 会把绝对路径写进 unit） |
+| `/usr/bin/rxctl` | 你（可选） | 指向 `/usr/local/bin/rxctl` 的软链，只为 `sudo rxctl` 方便 |
+| `/etc/reality-exit/` | `rxctl install tcp` | `meta.env` / `users.tsv` / `config.json` / `usage.tsv`（700 / 600） |
+| `/etc/hy/` | `rxctl install udp` | 自签证书 + UDP 配置（700 / 600） |
+| `/var/lib/rxctl/agent.json` | `rxctl agent` | 上次执行、错误、端口、自愈次数、最近用量（600） |
+| `/etc/systemd/system/reality-exit.service`<br>`hy-exit.service` / `rxctl-agent.service` | rxctl | 由 `install` / `agent install` 生成 |
+| `/etc/cron.d/rxctl-quota` | `rxctl quota cron` | 仅在不用 agent、走 cron 时存在 |
+
+> ⚠️ **顺序**：先把二进制放到最终位置，再执行 `rxctl install` / `rxctl agent install`。
+> 之后**不要随意挪动二进制**——agent 单元里的 `ExecStart` 是绝对路径；挪了要重新 `agent install`。
+> 升级时覆盖 `/usr/local/bin/rxctl` 后，记得 `systemctl restart rxctl-agent`（运行中的进程还用旧 inode）。
 
 ---
 
@@ -263,7 +317,7 @@ sudo rxctl uninstall all --purge    # 两套全清；保留 sing-box 二进制�
 ### 3.12 `version` / `help` / `completion`
 
 ```bash
-rxctl -V                  # 单行：rxctl 0.4.4 (linux/amd64)
+rxctl -V                  # 单行：rxctl 0.4.5 (linux/amd64)
 rxctl version             # 构建信息 + sing-box 版本/路径
 rxctl help user           # 子命令帮助
 rxctl completion bash     # 补全脚本（bash/zsh/fish/powershell）
@@ -372,13 +426,33 @@ sudo ./rxctl uninstall all          # 停 rxctl 的服务（保留文件）
 ```bash
 make build            # 本机 → bin/rxctl
 make cross            # Linux amd64/arm64、macOS arm64、Windows amd64 → dist/
-make test             # 单元测试
+make test             # go test ./...
+make vet              # go vet ./...
 ```
 
 或直接：
 
 ```bash
-CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=0.4.4" -o rxctl ./cmd/rxctl
+CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=0.4.5" -o rxctl ./cmd/rxctl
+```
+
+安装到 `$GOPATH/bin`（仓库 public 时）：
+
+```bash
+go install github.com/allong6/rxctl/cmd/rxctl@latest
+```
+
+目录结构：
+
+```text
+cmd/rxctl/          # 命令入口（main / m1 / agent）
+internal/engine/    # 安装、配置生成、防火墙计数、配额、自检、端口
+internal/state/     # meta.env / users.tsv / usage.tsv 读写（原子写）
+internal/links/     # vless:// / hysteria2:// 链接生成
+internal/check/     # 只读探测（systemctl / ss / sing-box）
+internal/qr/        # 内置二维码（vendored skip2/go-qrcode，MIT）
+internal/ui/        # 表格 / JSON 输出
+docs/               # CLI.md（完整规格）、DESIGN.md（设计与里程碑）
 ```
 
 构建机需要 Go 1.23+；**目标机什么都不需要**（静态二进制，不依赖 bash/curl/jq/qrencode）。
