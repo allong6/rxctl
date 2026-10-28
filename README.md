@@ -6,6 +6,8 @@
 代理出口服务器管理工具：**一个静态二进制**（Go，无运行时依赖）管完
 **安装 → 用户/端口/配额 → 链接/二维码 → 自检 → 自愈 → 卸载**。
 
+> 本仓库是**通用工具**，不包含任何内部配置、真实网络地址或凭据；示例中的 IP、端口、用户名均为占位符。
+
 支持两套方案，可只装一套，也可同机并存：
 
 | 方案 | 协议 | 实现 | 凭据 | 证书 | 端口 |
@@ -20,9 +22,9 @@
 ## 1. 30 秒上手
 
 ```bash
-# 装 TCP：24443 给 office（1.5T/月），再给 mobile 开 24444（500G/月）
-sudo rxctl install tcp --port 24443 --sni www.microsoft.com --user office --quota 1.5T
-sudo rxctl user add mobile --port 24444 --quota 500G
+# 装 TCP：443 给 alice（100G/月），再给 bob 开 8443（50G/月）
+sudo rxctl install tcp --port 443 --sni www.microsoft.com --user alice --quota 100G
+sudo rxctl user add bob --port 8443 --quota 50G
 
 sudo rxctl links            # 取 vless:// 链接，导入客户端
 sudo rxctl links --qr       # 直接扫码
@@ -114,17 +116,57 @@ sudo ln -sf /usr/local/bin/rxctl /usr/bin/rxctl   # /usr/bin 在 sudo secure_pat
 > 之后**不要随意挪动二进制**——agent 单元里的 `ExecStart` 是绝对路径；挪了要重新 `agent install`。
 > 升级时覆盖 `/usr/local/bin/rxctl` 后，记得 `systemctl restart rxctl-agent`（运行中的进程还用旧 inode）。
 
+### 1.2 两种部署方式（单机 / 中转）
+
+> 先区分两个概念：
+> **方案** = 协议（`tcp` = VLESS + Reality，`udp` = Hysteria2）；
+> **部署方式** = 客户端怎么到出口机（单机直连 / 入口中转）。
+
+#### 方式 A：单机直连
+
+```text
+客户端 ──TCP/UDP──> 出口机（rxctl）
+```
+
+- 出口机直接监听公网端口，客户端直连。
+- 方案：**TCP 或 UDP 任选**；也可以 `install all` 同机并存，各自端口。
+- 适合：客户端能直连出口，或只有一台机器。
+- 注意：出口端口直接暴露，只开必要端口，UUID/口令要足够强。
+
+#### 方式 B：入口中转
+
+```text
+客户端 ──> 入口机（DNAT + MASQUERADE）──> 出口机（rxctl）
+```
+
+- 入口机只做**四层转发**（不解析协议、不持有凭据）；出口机可以只信任入口机 IP。
+- 方案：**推荐 TCP（VLESS + Reality）**。中转只做 TCP DNAT 最简单；
+  UDP 也能转发，但需要入口机额外做 UDP DNAT，且链路上 UDP 更容易被限速/QoS。
+- 适合：客户端到出口的国际段不稳定，需要国内入口做中转。
+- 注意：入口机放行入口端口；出口机安全组只需放行“入口机 IP → 出口端口”。
+
+| | 单机直连 | 入口中转 |
+|---|---|---|
+| 机器数 | 1 | 2 |
+| 协议 | TCP / UDP | 以 TCP 为主 |
+| 延迟 | 少一跳 | 多一跳 |
+| 暴露面 | 出口直接暴露 | 出口只对入口开放 |
+| 典型用途 | 海外 VPS 直接给客户端 | 国内入口 + 海外出口 |
+
+> rxctl 只管理**出口机**；入口机的 DNAT/MASQUERADE 是普通 iptables 规则，不由 rxctl 接管。
+> 出口机上的用户、端口、配额、计量，两种部署方式完全一致。
+
 ---
 
 ## 2. 命令速查
 
 | 命令 | 作用 | 常用写法 |
 |---|---|---|
-| `install <tcp\|udp\|all>` | 安装方案 | `sudo rxctl install tcp --port 24443 --user office --quota 1.5T` |
+| `install <tcp\|udp\|all>` | 安装方案 | `sudo rxctl install tcp --port 443 --user alice --quota 100G` |
 | `status [tcp\|udp\|all]` | 服务、端口、用户数 | `sudo rxctl status` |
 | `user add/del/list/show/rotate/enable/disable/port` | 多用户 + 独立端口 + 配额 | `sudo rxctl user add bob --port 20001 --quota 500G` |
 | `links [--scheme] [--qr]` | 客户端链接 | `sudo rxctl links --qr` |
-| `qr <链接/文本>` | 给任意链接打印二维码（如经 A 中转的链接） | `sudo rxctl qr "vless://..."` |
+| `qr <链接/文本>` | 给任意链接打印二维码（如经中转机的链接） | `sudo rxctl qr "vless://..."` |
 | `usage [--refresh] [--month]` | 用量与配额 | `sudo rxctl usage --refresh` |
 | `quota check/set/cron/status` | 累计/熔断/月重置 | `sudo rxctl quota check` |
 | `agent run/once/install/uninstall/status` | 常驻统计 + 自愈（替代 cron） | `sudo rxctl agent install` |
@@ -135,7 +177,7 @@ sudo ln -sf /usr/local/bin/rxctl /usr/bin/rxctl   # /usr/bin 在 sudo secure_pat
 | `start\|stop\|restart [tcp\|udp\|all]` | 服务控制 | `sudo rxctl restart tcp` |
 | `doctor [--selftest]` | 只读体检 | `sudo rxctl doctor` |
 | `uninstall <tcp\|udp\|all> [--purge]` | 卸载 | `sudo rxctl uninstall udp --purge` |
-| `hy2 <sub>` | UDP 的别名入口 | `sudo rxctl hy2 install --port 24445` |
+| `hy2 <sub>` | UDP 的别名入口 | `sudo rxctl hy2 install --port 24446` |
 | `version` / `-V` | 版本与依赖 | `rxctl version`（不需要 sudo） |
 
 ---
@@ -156,7 +198,7 @@ sudo rxctl install <tcp|udp|all> [--port N] [--udp-port N] \
 | `--udp-port` | all | `install all` 时 UDP 用的端口（默认 24446） |
 | `--sni` | 两者 | Reality 伪装站点 / 自签证书 CN（默认 `www.microsoft.com`） |
 | `--user` | 两者 | 初始用户名（默认 `default`） |
-| `--quota` | 两者 | 初始用户配额（`1.5T`、`500G`、纯数字=字节；省略=不计量） |
+| `--quota` | 两者 | 初始用户配额（`100G`、`500M`、纯数字=字节；省略=不计量） |
 | `--open-firewall` | 两者 | 本机 firewalld/ufw 放行（云安全组仍需手动放行） |
 | `--dry-run` | 两者 | 只打印计划，不落盘、不改服务 |
 
@@ -165,7 +207,7 @@ sudo rxctl install <tcp|udp|all> [--port N] [--udp-port N] \
 - **初始用户直接占用 `--port`**（带端口 → 可计量）。
 - 安装会生成 Reality 密钥/自签证书、写 `config.json`、装 systemd 单元并 `enable --now`。
 - 装 UDP 时 **云防火墙必须单独放行 UDP**（TCP 规则不覆盖 UDP）。
-- 装前先看计划：`sudo rxctl install tcp --port 24443 --dry-run`。
+- 装前先看计划：`sudo rxctl install tcp --port 443 --dry-run`。
 
 ### 3.2 `status` —— 一眼看状态
 
@@ -175,7 +217,7 @@ sudo rxctl status [tcp|udp|all] [--json]
 
 ```text
 方案      状态      服务      端口           用户
-tcp      已安装     active   24443,24444    2
+tcp      已安装     active   443,8443      2
 udp      未安装     -        -              0
 ```
 
@@ -200,7 +242,7 @@ sudo rxctl user port <名字> <新端口> [--scheme tcp|udp]
 | `rotate` | 只换凭据，端口/配额不变 |
 
 ```bash
-# 加一个走 20001 的同事，500G/月
+# 加一个走 20001 的用户，500G/月
 sudo rxctl user add bob --port 20001 --quota 500G
 # 取他的链接（手机扫码）
 sudo rxctl user show bob --qr
@@ -216,10 +258,10 @@ sudo rxctl links [--scheme tcp|udp|all] [--json] [--qr]
 
 ```text
 == TCP / VLESS + Reality ==
-  [office] 24443
-    vless://...@8.219.54.143:24443?...#office
-  [mobile] 24444
-    vless://...@8.219.54.143:24444?...#mobile
+  [alice] 443
+    vless://...@203.0.113.10:443?...#alice
+  [bob] 8443
+    vless://...@203.0.113.10:8443?...#bob
 ```
 
 - `--qr`：每条链接后打印二维码（终端可直接扫）。
@@ -229,7 +271,7 @@ sudo rxctl links [--scheme tcp|udp|all] [--json] [--qr]
 ### 3.4.1 `qr` —— 给任意链接出二维码
 
 ```bash
-sudo rxctl qr "vless://..."     # 适合经 A 中转、server 不是本机的链接
+sudo rxctl qr "vless://..."     # 适合经中转机、server 不是本机的链接
 ```
 
 `links --qr` / `user show --qr` 只画本机生成的链接；这条命令可以画任何文本链接。
@@ -242,8 +284,8 @@ sudo rxctl quota <check|set|cron|uncron|status>
 
 ```text
 用户      方案    端口    已用     配额     占比     状态
-mobile   tcp    24444   988.7M  500.0G   0.2%    正常
-office   tcp    24443   6.5G    1.5T     0.4%    正常
+alice    tcp    443     1.2G    100.0G   1.2%    正常
+bob      tcp    8443    480M    50.0G    0.9%    正常
 ```
 
 | 项 | 规则 |
@@ -287,7 +329,7 @@ sudo rxctl selftest [tcp|udp|all] [--json]
 再和 `meta.env` 里的 `PUB_IP` 比对；跑完即删临时配置。
 
 ```text
-tcp    OK    出口 8.219.54.143
+tcp    OK    出口 203.0.113.10
 udp    OK    未安装
 ```
 
@@ -300,13 +342,13 @@ sudo rxctl doctor [--selftest] [--json]
 ```
 
 ```text
-系统           OK    CentOS Linux 8 · kernel 4.18 · systemd 239
-资源           OK    1723M total, 909M avail · swap 0M · disk 26G free
-sing-box       OK    1.14.3 (/usr/local/bin/sing-box)
-agent          OK    服务 active（上次 2026-10-27T15:44:54+08:00）
+系统           OK    <发行版> · kernel <ver> · systemd <ver>
+资源           OK    <内存> · swap <大小> · disk <剩余>
+sing-box       OK    <版本> (/usr/local/bin/sing-box)
+agent          OK    服务 active（上次 <时间>）
 tcp            OK    服务 active
 tcp 配置       OK    校验 OK · 权限 0600
-tcp 端口       OK    24443 listening
+tcp 端口       OK    443 listening
 tcp 用户       OK    2 个用户
 ```
 
@@ -329,7 +371,7 @@ sudo rxctl start|stop|restart [tcp|udp|all]
 sudo rxctl hy2 install --port 24445 --sni www.microsoft.com
 sudo rxctl hy2 info          # 链接 + 二维码
 sudo rxctl hy2 status|restart|logs|selftest
-sudo rxctl hy2 user add phone --port 24446
+sudo rxctl hy2 user add phone --port 24450
 ```
 
 等价于 `rxctl install udp …` / `rxctl user … --scheme udp`，只是更贴近 shell 版的使用习惯。
@@ -358,16 +400,16 @@ rxctl completion bash     # 补全脚本（bash/zsh/fish/powershell）
 ### 4.1 新机器从零上线（TCP）
 
 ```bash
-sudo ./rxctl install tcp --port 24443 --sni www.microsoft.com --user office --quota 1.5T
-sudo ./rxctl user add mobile --port 24444 --quota 500G
+sudo ./rxctl install tcp --port 443 --sni www.microsoft.com --user alice --quota 100G
+sudo ./rxctl user add bob --port 8443 --quota 50G
 sudo ./rxctl selftest
 sudo ./rxctl links --qr
 sudo ./rxctl agent install     # 二选一：agent（推荐）或 quota cron
 ```
 
-云厂商控制台记得放行 **TCP 24443/24444**（24443 若只给中转机，就只放中转机 IP）。
+云厂商控制台记得放行 **TCP 443/8443**（443 若只给中转机，就只放中转机 IP）。
 
-### 4.2 加一个同事 / 给手机用
+### 4.2 加一个用户 / 给手机用
 
 ```bash
 sudo rxctl user add alice --port 20001 --quota 300G     # TCP
@@ -403,7 +445,7 @@ sudo ./rxctl uninstall all          # 停 rxctl 的服务（保留文件）
 # 或：把 shell 版重新指到同样的目录
 ```
 
-生产环境的切换与回滚记录属于内部运维文档，不随本仓库发布。
+本仓库只包含工具本身；生产环境的变更记录请自行留存。
 
 ---
 
@@ -412,7 +454,7 @@ sudo ./rxctl uninstall all          # 停 rxctl 的服务（保留文件）
 | 现象 | 原因 / 处理 |
 |---|---|
 | `rxctl links` 说"需要 root" | 状态目录 700；用 `sudo rxctl links` |
-| `sudo rxctl` 报 `command not found` | CentOS sudo `secure_path` 不含 `/usr/local/bin`；用 `sudo /usr/local/bin/rxctl`，或建 `/usr/bin/rxctl` 软链 |
+| `sudo rxctl` 报 `command not found` | 部分发行版（如 CentOS/RHEL）的 sudo `secure_path` 不含 `/usr/local/bin`；用 `sudo /usr/local/bin/rxctl`，或建 `/usr/bin/rxctl` 软链 |
 | `links` 真的显示"未安装" | 看 `sudo rxctl status`；确认没带错 `--root`；确认 `/etc/reality-exit/meta.env` 存在 |
 | UDP 客户端一直超时 | **云安全组没放行 UDP**（TCP 规则不覆盖 UDP） |
 | `usage` 数字不涨 | 先 `sudo rxctl usage --refresh`（或等 agent 10 分钟一轮）；确实不涨再看是否没有独立端口（无端口=不计量）、计数链是否丢了（`sudo rxctl fw restore`） |

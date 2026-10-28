@@ -7,25 +7,25 @@ import (
 )
 
 func TestTcpInboundsGrouping(t *testing.T) {
-	m := state.TcpMeta{PubIP: "1.2.3.4", Port: 24443, SNI: "www.microsoft.com", Priv: "priv", Pub: "pub", SID: "abcd"}
+	m := state.TcpMeta{PubIP: "1.2.3.4", Port: 443, SNI: "www.microsoft.com", Priv: "priv", Pub: "pub", SID: "abcd"}
 	us := []state.TcpUser{
-		{Name: "office", UUID: "u1", Port: 24443},
-		{Name: "mobile", UUID: "u2", Port: 24444},
-		{Name: "legacy", UUID: "u3", Port: 0}, // 走默认端口
+		{Name: "alice", UUID: "u1", Port: 443},
+		{Name: "bob", UUID: "u2", Port: 8443},
+		{Name: "carol", UUID: "u3", Port: 0}, // 走默认端口
 	}
 	ins := tcpInbounds(m, us)
 	if len(ins) != 2 {
 		t.Fatalf("want 2 inbounds, got %d", len(ins))
 	}
 	first := ins[0].(map[string]any)
-	if first["listen_port"].(int) != 24443 {
+	if first["listen_port"].(int) != 443 {
 		t.Fatalf("first port: %+v", first)
 	}
 	if n := len(first["users"].([]any)); n != 2 {
 		t.Fatalf("default-port users should group together, got %d", n)
 	}
 	second := ins[1].(map[string]any)
-	if second["listen_port"].(int) != 24444 {
+	if second["listen_port"].(int) != 8443 {
 		t.Fatalf("second port: %+v", second)
 	}
 }
