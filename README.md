@@ -62,18 +62,18 @@ cd rxctl
 CGO_ENABLED=0 go build -trimpath -o /usr/local/bin/rxctl ./cmd/rxctl
 ```
 
-**方式 C：`go install`（需要仓库是 public）**
+**方式 C：`go install`**
 
 ```bash
 go install github.com/allong6/rxctl/cmd/rxctl@latest    # → $GOPATH/bin/rxctl
 sudo install -m 0755 "$(go env GOPATH)/bin/rxctl" /usr/local/bin/rxctl
 ```
 
-**方式 D：从 GitHub Release 下载**（仓库 private，需先 `gh auth login`）
+**方式 D：从 GitHub Release 下载**（仓库已 public，直接下载）
 
 ```bash
-gh release download v0.4.7 -R allong6/rxctl \
-  -p 'rxctl-linux-amd64' -p 'SHA256SUMS'
+curl -LO https://github.com/allong6/rxctl/releases/download/v0.4.7/rxctl-linux-amd64
+curl -LO https://github.com/allong6/rxctl/releases/download/v0.4.7/SHA256SUMS
 sha256sum -c SHA256SUMS
 sudo install -m 0755 rxctl-linux-amd64 /usr/local/bin/rxctl
 ```
@@ -507,7 +507,7 @@ make release          # Linux amd64/arm64/armv7 → dist/ + SHA256SUMS
 CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=0.4.7" -o rxctl ./cmd/rxctl
 ```
 
-安装到 `$GOPATH/bin`（仓库 public 时）：
+安装到 `$GOPATH/bin`：
 
 ```bash
 go install github.com/allong6/rxctl/cmd/rxctl@latest
