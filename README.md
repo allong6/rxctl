@@ -306,6 +306,10 @@ sudo rxctl export --format clash --server 120.26.2.197 \
 
 Clash Verge Rev → Profiles → Import → Local File，选这个文件即可（规则已内置）。
 
+> 如果导入后报 GEOSITE 不可用：把 GEOSITE,cn,DIRECT 换成 DOMAIN-SUFFIX,cn,DIRECT；
+> 如果 DNS 段报错：先整段删掉 dns:，用客户端默认 DNS 把链路跑通。
+> 直连 B 的配置不要加 --server/--port-map。
+
 ---
 ### 3.5 `usage` / `quota` —— 用量与熔断
 ```bash
