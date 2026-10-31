@@ -454,8 +454,23 @@ rxctl 生成两种链接，能用的客户端不一样：
 - `vless://…` —— VLESS + Reality（TCP）：需要支持 **Reality** 的客户端；
 - `hysteria2://…` —— Hysteria2（UDP/QUIC）：**Xray 内核不支持**，要用 sing-box / Mihomo / NekoBox 这类内核。
 
-> 下表为第三方客户端，与本项目无关联；版本更新快，**以各客户端最新版为准**。
+> 以下为第三方客户端，与本项目无关联；版本更新快，**以各客户端最新版为准**。
 > iOS 上的 sing-box / Shadowrocket 需要非中国区 Apple ID。
+
+#### 各端首选（1–2 个）
+
+| 平台 | 首选 | 备选 | 推荐原因 |
+|---|---|---|---|
+| Windows | **Clash Verge Rev** | v2rayN | Verge 用 Mihomo 内核，Reality + Hysteria2 都原生支持，TUN/规则/订阅/自动更新齐全；v2rayN 更老牌、更轻，但默认 Xray 内核**不支持 Hysteria2**（要切 sing-box 内核） |
+| macOS | **Clash Verge Rev** | sing-box（SFM） | 与 Windows 同内核同界面，Intel / Apple Silicon 通用；SFM 是官方原生、免费，但偏配置/订阅，导入链接没前者顺手 |
+| Linux | **Clash Verge Rev** | sing-box（CLI） | 桌面用 GUI，功能与 Windows 一致；服务器/路由用 CLI 最轻、最稳 |
+| Android | **Hiddify** | NekoBox for Android | Hiddify 基于 sing-box，两种协议都支持，扫码/粘贴导入最简单；NekoBox 更细（分应用代理、路由），但设置项多 |
+| iOS | **Shadowrocket** | sing-box（SFI） | Shadowrocket 付费但最稳、规则完善、两种协议都支持；SFI 免费官方，配置稍手动 |
+| OpenWrt | **mihomo** | sing-box | mihomo 与 Clash Verge 同内核，节点/规则可复用；sing-box 更轻、资源占用低 |
+
+> **为什么不是 v2rayNG**：它基于 Xray，`hysteria2://` 用不了；如果你只用 `vless://`，它依然是最轻的选择之一。
+
+#### 完整兼容表（更多选择）
 
 | 平台 | 推荐客户端 | VLESS+Reality | Hysteria2 | 说明 |
 |---|---|---|---|---|
