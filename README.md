@@ -447,6 +447,46 @@ sudo ./rxctl uninstall all          # 停 rxctl 的服务（保留文件）
 
 本仓库只包含工具本身；生产环境的变更记录请自行留存。
 
+### 4.6 客户端推荐（按链接类型选）
+
+rxctl 生成两种链接，能用的客户端不一样：
+
+- `vless://…` —— VLESS + Reality（TCP）：需要支持 **Reality** 的客户端；
+- `hysteria2://…` —— Hysteria2（UDP/QUIC）：**Xray 内核不支持**，要用 sing-box / Mihomo / NekoBox 这类内核。
+
+> 下表为第三方客户端，与本项目无关联；版本更新快，**以各客户端最新版为准**。
+> iOS 上的 sing-box / Shadowrocket 需要非中国区 Apple ID。
+
+| 平台 | 推荐客户端 | VLESS+Reality | Hysteria2 | 说明 |
+|---|---|---|---|---|
+| Windows | **v2rayN** | ✅ | ⚠️ 需切 sing-box 内核 | 默认 Xray 内核不支持 Hysteria2 |
+| Windows | **Clash Verge Rev** | ✅ | ✅ | Mihomo 内核，图形化好 |
+| Windows | **NekoBox / NekoRay** | ✅ | ✅ | sing-box 内核 |
+| Windows | **Hiddify** | ✅ | ✅ | 跨平台，导入链接方便 |
+| macOS | **Clash Verge Rev / Mihomo Party** | ✅ | ✅ | Mihomo 内核 |
+| macOS | **Hiddify** | ✅ | ✅ | 跨平台 |
+| macOS | **sing-box（SFM）** | ✅ | ✅ | 官方 GUI，需非中国区 App Store |
+| Linux | **NekoBox / NekoRay（AppImage）** | ✅ | ✅ | sing-box 内核 |
+| Linux | **Clash Verge Rev / Mihomo Party** | ✅ | ✅ | Mihomo 内核 |
+| Linux | **Hiddify** | ✅ | ✅ | 跨平台 |
+| Linux | **sing-box（CLI）** | ✅ | ✅ | 直接跑配置，适合服务器/路由 |
+| Android | **v2rayNG** | ✅ | ❌ | Xray 内核，不支持 Hysteria2 |
+| Android | **NekoBox for Android** | ✅ | ✅ | sing-box 内核 |
+| Android | **Hiddify** | ✅ | ✅ | 跨平台 |
+| Android | **Clash Meta for Android / FlClash** | ✅ | ✅ | Mihomo 内核 |
+| iOS | **sing-box（SFI）** | ✅ | ✅ | 免费、官方；需非中国区 App Store |
+| iOS | **Shadowrocket** | ✅ | ✅ | 付费；以最新版为准 |
+| 路由器 / OpenWrt | **sing-box / mihomo** | ✅ | ✅ | 直接跑内核；passwall2 用的是 Xray，仅 VLESS |
+
+**导入方式**
+
+1. **复制链接**：`sudo rxctl links` → 客户端「从剪贴板导入」/「Import from clipboard」；
+2. **扫码**：`sudo rxctl links --qr`，或 `sudo rxctl user show <用户名> --qr`；
+3. **sing-box 配置片段**：`sudo rxctl user show <用户名> --json`（可直接粘到 outbounds）。
+
+> 同一链接在多台设备导入，**共用该端口的配额**（计量按端口）。要给不同设备分开计量，
+> 就 `user add` 各建一个用户/端口。
+
 ---
 
 ## 5. 常见问题
