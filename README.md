@@ -454,21 +454,39 @@ rxctl 生成两种链接，能用的客户端不一样：
 - `vless://…` —— VLESS + Reality（TCP）：需要支持 **Reality** 的客户端；
 - `hysteria2://…` —— Hysteria2（UDP/QUIC）：**Xray 内核不支持**，要用 sing-box / Mihomo / NekoBox 这类内核。
 
+> **分流发生在客户端**：服务端只负责转发，不按域名判断；下面的“国内直连”配置都在客户端做。
+
 > 以下为第三方客户端，与本项目无关联；版本更新快，**以各客户端最新版为准**。
 > iOS 上的 sing-box / Shadowrocket 需要非中国区 Apple ID。
 
-#### 各端首选（1–2 个）
+#### 各端首选（1–2 个，优先看“分流”）
+
+> 选客户端的**首要标准是能不能快速做到“国内直连、其余代理”**，其次才是协议支持。
 
 | 平台 | 首选 | 备选 | 推荐原因 |
 |---|---|---|---|
-| Windows | **Clash Verge Rev** | v2rayN | Verge 用 Mihomo 内核，Reality + Hysteria2 都原生支持，TUN/规则/订阅/自动更新齐全；v2rayN 更老牌、更轻，但默认 Xray 内核**不支持 Hysteria2**（要切 sing-box 内核） |
-| macOS | **Clash Verge Rev** | sing-box（SFM） | 与 Windows 同内核同界面，Intel / Apple Silicon 通用；SFM 是官方原生、免费，但偏配置/订阅，导入链接没前者顺手 |
-| Linux | **Clash Verge Rev** | sing-box（CLI） | 桌面用 GUI，功能与 Windows 一致；服务器/路由用 CLI 最轻、最稳 |
-| Android | **Hiddify** | NekoBox for Android | Hiddify 基于 sing-box，两种协议都支持，扫码/粘贴导入最简单；NekoBox 更细（分应用代理、路由），但设置项多 |
-| iOS | **Shadowrocket** | sing-box（SFI） | Shadowrocket 付费但最稳、规则完善、两种协议都支持；SFI 免费官方，配置稍手动 |
-| OpenWrt | **mihomo** | sing-box | mihomo 与 Clash Verge 同内核，节点/规则可复用；sing-box 更轻、资源占用低 |
+| Windows | **NekoRay** | Clash Verge Rev | NekoRay 基于 sing-box，Reality + Hysteria2 都支持，且**自带 “Bypass LAN and Mainland China” 路由预设**，导入链接后一键分流；Clash Verge 界面更好、规则更强，但需要自己加载带规则的 profile |
+| macOS | **Clash Verge Rev** | sing-box（SFM） | NekoRay 没有 macOS 版；Verge 用 Mihomo 规则模式（`GEOSITE,cn` / `GEOIP,CN` → DIRECT），SFM 用 `rule_set` 也能分流但偏配置 |
+| Linux | **NekoRay（AppImage）** | Clash Verge Rev | 与 Windows 同理，自带大陆分流预设；桌面 GUI 也可选 Verge |
+| Android | **NekoBox for Android** | v2rayNG（仅 VLESS） | NekoBox 基于 sing-box，两种协议都支持，路由预设含 **Bypass LAN and Mainland China**，扫码即用；v2rayNG 的“绕过大陆”最省事，但 Xray 内核**不支持 Hysteria2** |
+| iOS | **Shadowrocket** | sing-box（SFI） | Shadowrocket 规则模式成熟（可写 `GEOIP,CN,DIRECT` / `FINAL,PROXY`），两种协议都支持；SFI 免费官方，用 `rule_set` 分流但配置稍手动 |
+| OpenWrt | **mihomo** | sing-box | 与 Clash Verge 同内核，规则/节点可复用；sing-box 更轻 |
 
-> **为什么不是 v2rayNG**：它基于 Xray，`hysteria2://` 用不了；如果你只用 `vless://`，它依然是最轻的选择之一。
+#### 分流（国内直连）怎么开
+
+目标：**国内域名/IP → 直连，其余 → 代理**；DNS 也要分流（国内域名用国内 DNS，其余走代理解析）。
+
+| 客户端 | 快速做法 |
+|---|---|
+| v2rayN / v2rayNG | 「路由」→「**绕过大陆**」（内置 geosite:cn + geoip:cn 直连），其余走代理 |
+| NekoRay / NekoBox | 「路由」→ 选 **Bypass LAN and Mainland China** 预设；确认 DNS 走远端 |
+| Clash Verge Rev / mihomo | 用「规则」模式，profile 里加：`GEOSITE,cn,DIRECT` → `GEOIP,CN,DIRECT` → `MATCH,PROXY`；DNS 用 `nameserver-policy` 分流 |
+| Shadowrocket | 「配置」模式，规则加 `DOMAIN-SUFFIX,cn,DIRECT` / `GEOIP,CN,DIRECT`，最后 `FINAL,PROXY` |
+| sing-box（SFI/SFM/CLI） | `route.rules`：`rule_set: geosite-cn / geoip-cn → direct`，`final: proxy`；DNS 用 `rules` 分流 |
+
+> ⚠️ **只导入一条 `vless://`/`hysteria2://` 链接时，客户端通常没有分流规则**——
+> 要么开「规则/配置」模式并加载规则，要么用自带“绕过大陆”预设的客户端（v2rayN / v2rayNG / NekoRay / NekoBox）。
+> 另外**优先按域名（geosite/rule-set）判断**，只靠 `GEOIP,CN` 容易把共享 CDN 误判成国内。
 
 #### 完整兼容表（更多选择）
 
