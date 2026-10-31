@@ -54,6 +54,8 @@ rxctl
 │   ├─ disable <name> [--scheme ...]
 │   └─ port    <name> <N> [--scheme tcp|udp]
 ├─ links     [--scheme ...] [--json] [--qr]
+├─ export    [--format uri|clash|singbox] [--user N] [--scheme ...]
+│             [--server H] [--port N] [--port-map 24443=28544] [--rules cn|none]
 ├─ usage     [--month YYYY-MM] [--scheme ...] [--refresh] [--json]
 ├─ quota
 │   ├─ check   [--json]
@@ -163,6 +165,23 @@ bob      udp   20002   100G     100G     100.0%   已封
 
 ---
 
+### 3.4.1 `export` —— 客户端配置导出
+
+```bash
+rxctl export --format uri        # 单节点 URI（等同 links）
+rxctl export --format clash      # 完整 Clash/Mihomo YAML
+rxctl export --format singbox    # 完整 sing-box 客户端 JSON
+```
+
+| 参数 | 说明 |
+|---|---|
+| `--user` | 只导出某个用户 |
+| `--scheme` | tcp / udp / all |
+| `--server` | 覆盖服务器地址（中转场景） |
+| `--port-map` | 端口映射（原端口=新端口） |
+| `--rules cn/none` | 是否内置国内直连规则（默认 cn） |
+
+`clash` 输出含 proxies / proxy-groups / rules / dns，可直接导入 Clash Verge Rev。
 ### 3.5 `version`
 
 ```bash

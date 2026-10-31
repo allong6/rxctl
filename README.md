@@ -15,7 +15,7 @@
 | `tcp` | VLESS + Reality | sing-box `vless` 入站 | UUID | 不需要 | TCP |
 | `udp` | Hysteria2（QUIC） | sing-box `hysteria2` 入站 | 口令（可选 obfs） | 自签 | UDP |
 
-> 状态：**M1 + M2 完成**（v0.4.7）。M3（配置中心/自更新）未开始，见 [docs/DESIGN.md](docs/DESIGN.md)。
+> 状态：**M1 + M2 完成**（v0.4.8）。M3（配置中心/自更新）未开始，见 [docs/DESIGN.md](docs/DESIGN.md)。
 
 ---
 
@@ -72,8 +72,8 @@ sudo install -m 0755 "$(go env GOPATH)/bin/rxctl" /usr/local/bin/rxctl
 **方式 D：从 GitHub Release 下载**（仓库已 public，直接下载）
 
 ```bash
-curl -LO https://github.com/allong6/rxctl/releases/download/v0.4.7/rxctl-linux-amd64
-curl -LO https://github.com/allong6/rxctl/releases/download/v0.4.7/SHA256SUMS
+curl -LO https://github.com/allong6/rxctl/releases/download/v0.4.8/rxctl-linux-amd64
+curl -LO https://github.com/allong6/rxctl/releases/download/v0.4.8/SHA256SUMS
 sha256sum -c SHA256SUMS
 sudo install -m 0755 rxctl-linux-amd64 /usr/local/bin/rxctl
 ```
@@ -167,6 +167,7 @@ sudo ln -sf /usr/local/bin/rxctl /usr/bin/rxctl   # /usr/bin 在 sudo secure_pat
 | `user add/del/list/show/rotate/enable/disable/port` | 多用户 + 独立端口 + 配额 | `sudo rxctl user add bob --port 20001 --quota 500G` |
 | `links [--scheme] [--qr]` | 客户端链接 | `sudo rxctl links --qr` |
 | `qr <链接/文本>` | 给任意链接打印二维码（如经中转机的链接） | `sudo rxctl qr "vless://..."` |
+| export [--format ...] | 导出客户端配置（uri / clash / singbox） | sudo rxctl export --format clash > rxctl.yaml |
 | `usage [--refresh] [--month]` | 用量与配额 | `sudo rxctl usage --refresh` |
 | `quota check/set/cron/status` | 累计/熔断/月重置 | `sudo rxctl quota check` |
 | `agent run/once/install/uninstall/status` | 常驻统计 + 自愈（替代 cron） | `sudo rxctl agent install` |
@@ -276,6 +277,36 @@ sudo rxctl qr "vless://..."     # 适合经中转机、server 不是本机的链
 
 `links --qr` / `user show --qr` 只画本机生成的链接；这条命令可以画任何文本链接。
 
+### 3.4.2 `export` —— 导出客户端配置
+
+`links` 只给单节点 URI；`export` 能直接生成**客户端要的完整配置**。
+
+```bash
+rxctl export --format uri        # vless:// / hysteria2://（默认）
+rxctl export --format clash      # 完整 Clash/Mihomo YAML（Clash Verge Rev 可直接导入）
+rxctl export --format singbox    # 完整 sing-box 客户端 JSON（SFI/SFM/CLI）
+```
+
+| 参数 | 说明 |
+|---|---|
+| `--format` | `uri` / `clash` / `singbox`（默认 `uri`） |
+| `--user` | 只导出某个用户（默认全部） |
+| `--scheme` | `tcp` / `udp` / `all` |
+| `--server` | 覆盖地址（经中转机时填中转机 IP） |
+| `--port-map` | 端口映射，如 `24443=28544,24444=28545` |
+| `--port` | 单节点时覆盖端口 |
+| `--rules` | `cn`（默认，内置国内直连规则）/ `none` |
+
+经中转机导出 Clash 配置：
+
+```bash
+sudo rxctl export --format clash --server 120.26.2.197 \
+  --port-map 24443=28544,24444=28545 > /root/clash.yaml
+```
+
+Clash Verge Rev → Profiles → Import → Local File，选这个文件即可（规则已内置）。
+
+---
 ### 3.5 `usage` / `quota` —— 用量与熔断
 ```bash
 sudo rxctl usage [--refresh] [--month YYYY-MM] [--scheme ...]
@@ -387,7 +418,7 @@ sudo rxctl uninstall all --purge    # 两套全清；保留 sing-box 二进制�
 ### 3.12 `version` / `help` / `completion`
 
 ```bash
-rxctl -V                  # 单行：rxctl 0.4.7 (linux/amd64)
+rxctl -V                  # 单行：rxctl 0.4.8 (linux/amd64)
 rxctl version             # 构建信息 + sing-box 版本/路径
 rxctl help user           # 子命令帮助
 rxctl completion bash     # 补全脚本（bash/zsh/fish/powershell）
@@ -590,7 +621,7 @@ make release          # Linux amd64/arm64/armv7 → dist/ + SHA256SUMS
 或直接：
 
 ```bash
-CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=0.4.7" -o rxctl ./cmd/rxctl
+CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=0.4.8" -o rxctl ./cmd/rxctl
 ```
 
 安装到 `$GOPATH/bin`：
@@ -605,8 +636,8 @@ go install github.com/allong6/rxctl/cmd/rxctl@latest
 测试 → 构建 linux amd64/arm64/armv7 → 生成 `SHA256SUMS` → 创建 Release。
 
 ```bash
-git tag -a v0.4.7 -m "rxctl v0.4.7"
-git push origin v0.4.7
+git tag -a v0.4.8 -m "rxctl v0.4.8"
+git push origin v0.4.8
 ```
 
 也可以在本地先验证产物：`make release`（只构建，不发布）。

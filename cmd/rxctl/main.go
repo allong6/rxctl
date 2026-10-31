@@ -33,6 +33,7 @@ const usageText = `rxctl — 代理出口服务器管理
   status [tcp|udp|all]     服务、端口、用户数
   user add|list|del|show   用户管理（可分配独立端口与配额）
   links                    列出客户端链接
+  export --format ...      导出配置（uri / clash / singbox）
   usage                    用量与配额
   quota check|cron         配额熔断与定时任务
   agent run|install|status 常驻：定时统计 + 服务自愈（替代 cron）
@@ -112,6 +113,8 @@ dispatch:
 		return cmdStatus(rest)
 	case "links":
 		return cmdLinks(rest)
+	case "export":
+		return cmdExport(rest)
 	case "qr":
 		return cmdQR(rest)
 	case "usage":
@@ -152,7 +155,7 @@ dispatch:
 
 func helpFor(cmd string) int {
 	switch cmd {
-	case "version", "status", "links", "usage", "doctor", "selftest":
+	case "version", "status", "links", "export", "usage", "doctor", "selftest":
 		fmt.Printf("用法: rxctl %s [--json]\n", cmd)
 	case "install":
 		fmt.Println("用法: rxctl install <tcp|udp|all> [--port N] [--udp-port N] [--sni HOST] [--user NAME] [--quota 500G] [--open-firewall] [--dry-run]")
