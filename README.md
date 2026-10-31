@@ -459,22 +459,23 @@ rxctl 生成两种链接，能用的客户端不一样：
 > 以下为第三方客户端，与本项目无关联；版本更新快，**以各客户端最新版为准**。
 > iOS 上的 Karing / sing-box / Shadowrocket 需要非中国区 Apple ID。
 
-#### 各端首选（新 + 轻 + 仍在维护）
+#### 各端首选与备选（稳定优先）
 
-> 选型标准：**仍在维护（看最近 release）→ 轻量 → 能快速做“国内直连”**。
-> NekoRay 最后发布 **2024-12**，已不推荐；NekoBox for Android 2026-02 仍更新，但不如 FlClash / Karing 新。
+> 选型原则：**稳定 > 轻量 > 国内直连 > 更新频率**。
+> “更新慢但极稳”可以接受（如 Shadowrocket）；**已停更且无独特优势**的不再推荐（NekoRay 停在 2024-12）。
 
-| 平台 | 首选 | 备选 | 最近发布 | 推荐原因 |
-|---|---|---|---|---|
-| Windows | **FlClash** | Clash Verge Rev | 2026-10 / 2026-10 | FlClash 是 Flutter，轻量、跨平台，Mihomo 内核原生支持 Reality + Hysteria2；两者都用「规则」模式做国内直连 |
-| macOS | **FlClash** | Karing | 2026-10 / 2026-09 | 同上；Karing 更偏新手，Clash 兼容 |
-| Linux | **FlClash（AppImage）** | sing-box（CLI） | 2026-10 / 2026-10 | 桌面 GUI；服务器/路由用 CLI 最轻 |
-| Android | **FlClash** | Karing | 2026-10 / 2026-09 | 都比 NekoBox（2026-02）新；FlClash 轻、Karing 易用 |
-| iOS | **Karing** | sing-box（SFI） | 2026-09 / 核心 2026-10 | Karing 跨平台、规则兼容 Clash；SFI 官方最轻但配置型 |
-| OpenWrt | **mihomo** | sing-box | 2026-10 / 2026-10 | 内核形态最轻，规则可复用 |
+| 平台 | 首选 | 备选（按推荐顺序） | 说明 |
+|---|---|---|---|
+| Windows | **Clash Verge Rev** | **v2rayN** · **FlClash** · sing-box（CLI） | Verge：Tauri 轻量、规则分流、两种协议、长期稳定；v2rayN 极稳 + 一键绕过大陆，但仅 VLESS；FlClash 更新快、Flutter、两种协议；CLI 最轻但配置型 |
+| macOS | **Clash Verge Rev** | **FlClash** · **Karing** · sing-box（SFM） | Verge 通用 Intel/ARM；FlClash/Karing 更偏新手；SFM 官方最轻、配置型 |
+| Linux（桌面） | **Clash Verge Rev** | **FlClash** · mihomo（CLI） | 桌面 GUI 优先；CLI 适合轻量场景 |
+| Linux（服务器/路由） | **sing-box** | **mihomo** | 几 MB、最轻最稳；mihomo 适合复用 Clash 规则 |
+| Android | **NekoBox for Android** | **v2rayNG** · **FlClash** · **Karing** | NekoBox：稳定、轻、两种协议、自带大陆分流预设（2026-02 仍更新）；v2rayNG 极稳 + 一键绕过大陆但仅 VLESS；FlClash/Karing 更新更快 |
+| iOS | **Shadowrocket** | **Karing** · **sing-box（SFI）** | Shadowrocket 付费但稳定、轻、规则成熟；Karing 易用；SFI 官方免费最轻 |
+| OpenWrt | **mihomo** | **sing-box** · passwall2（仅 VLESS） | 内核最轻；passwall2 稳定但 Xray 不支持 Hysteria2 |
 
-> 只用 `vless://`（不需要 Hysteria2）时，**v2rayN / v2rayNG** 仍是“最轻 + 一键绕过大陆”的选择，
-> 且两者 2026-10 仍在更新；但它们基于 Xray，**不认 `hysteria2://`**。
+> **为什么首选不总是“最新”**：FlClash/Karing 更新快，但 Clash Verge Rev 在体积（Tauri）、规则生态和稳定性上更均衡；
+> Android 上 NekoBox 虽然 2026-02 才更新，但轻、稳、自带大陆预设，比“更新更快但更重”的 FlClash 更适合当首选。
 
 #### 分流（国内直连）怎么开
 
@@ -482,42 +483,46 @@ rxctl 生成两种链接，能用的客户端不一样：
 
 | 客户端 | 快速做法 |
 |---|---|
-| FlClash / Clash Verge Rev / Karing（Clash 兼容） | 用「规则」模式，profile 里加：`GEOSITE,cn,DIRECT` → `GEOIP,CN,DIRECT` → `MATCH,PROXY`；DNS 用 `nameserver-policy` 分流 |
+| Clash Verge Rev / FlClash / Karing / mihomo（Clash 兼容） | 用「规则」模式，profile 里加：`GEOSITE,cn,DIRECT` → `GEOIP,CN,DIRECT` → `MATCH,PROXY`；DNS 用 `nameserver-policy` 分流 |
+| NekoBox for Android | 「路由」→ 选 **Bypass LAN and Mainland China** 预设 |
 | v2rayN / v2rayNG | 「路由」→「**绕过大陆**」（内置 geosite:cn + geoip:cn 直连），其余走代理（仅 VLESS） |
 | Shadowrocket | 「配置」模式，规则加 `DOMAIN-SUFFIX,cn,DIRECT` / `GEOIP,CN,DIRECT`，最后 `FINAL,PROXY` |
 | sing-box（SFI/SFM/CLI） | `route.rules`：`rule_set: geosite-cn / geoip-cn → direct`，`final: proxy`；DNS 用 `rules` 分流 |
 
 > ⚠️ **只导入一条 `vless://`/`hysteria2://` 链接时，客户端通常没有分流规则**——
-> FlClash / Clash Verge / Karing 要加载一份带规则的 profile；v2rayN/v2rayNG 用「绕过大陆」预设最省事。
+> Clash Verge / FlClash / Karing 要加载一份带规则的 profile；NekoBox、v2rayN/v2rayNG 用自带预设最省事。
 > 另外**优先按域名（geosite/rule-set）判断**，只靠 `GEOIP,CN` 容易把共享 CDN 误判成国内。
 
 #### 完整兼容表（更多选择）
 
-| 平台 | 推荐客户端 | VLESS+Reality | Hysteria2 | 说明 |
+| 平台 | 客户端 | VLESS+Reality | Hysteria2 | 说明 |
 |---|---|---|---|---|
-| Windows | **FlClash** | ✅ | ✅ | Mihomo，轻量，首选 |
-| Windows | **Clash Verge Rev** | ✅ | ✅ | Mihomo，Tauri 轻量 |
-| Windows | **v2rayN** | ✅ | ⚠️ 需切 sing-box 内核 | Xray 默认不支持 Hysteria2；2026-10 仍更新 |
-| Windows | NekoRay | ✅ | ✅ | sing-box；**最后发布 2024-12**，不推荐 |
+| Windows | **Clash Verge Rev** | ✅ | ✅ | 首选；Mihomo / Tauri |
+| Windows | **v2rayN** | ✅ | ⚠️ 需切 sing-box 内核 | 极稳；仅 VLESS 时首选 |
+| Windows | **FlClash** | ✅ | ✅ | 备选；Flutter / Mihomo |
+| Windows | **sing-box（CLI）** | ✅ | ✅ | 最轻，配置型 |
+| Windows | NekoRay | ✅ | ✅ | **停更 2024-12**，不推荐 |
 | Windows | Hiddify | ✅ | ✅ | Flutter，易用 |
-| macOS | **FlClash** | ✅ | ✅ | 首选 |
-| macOS | **Karing** | ✅ | ✅ | Clash 兼容，易用 |
-| macOS | Clash Verge Rev / Mihomo Party | ✅ | ✅ | Mihomo |
-| macOS | sing-box（SFM） | ✅ | ✅ | 官方 GUI |
-| Linux | **FlClash（AppImage）** | ✅ | ✅ | 首选 |
-| Linux | **sing-box（CLI）** | ✅ | ✅ | 最轻，适合服务器/路由 |
-| Linux | Clash Verge Rev | ✅ | ✅ | Mihomo |
-| Linux | NekoRay（AppImage） | ✅ | ✅ | **停更 2024-12**，不推荐 |
-| Android | **FlClash** | ✅ | ✅ | 首选 |
-| Android | **Karing** | ✅ | ✅ | 易用 |
-| Android | v2rayNG | ✅ | ❌ | Xray；一键“绕过大陆”，仅 VLESS |
-| Android | NekoBox for Android | ✅ | ✅ | 2026-02 仍更新 |
+| macOS | **Clash Verge Rev** | ✅ | ✅ | 首选 |
+| macOS | **FlClash** | ✅ | ✅ | 备选 |
+| macOS | **Karing** | ✅ | ✅ | 备选，易用 |
+| macOS | sing-box（SFM） | ✅ | ✅ | 官方，最轻 |
+| Linux | **Clash Verge Rev** | ✅ | ✅ | 桌面首选 |
+| Linux | **FlClash（AppImage）** | ✅ | ✅ | 备选 |
+| Linux | **sing-box（CLI）** | ✅ | ✅ | 服务器/路由首选，最轻 |
+| Linux | mihomo（CLI） | ✅ | ✅ | Clash 规则复用 |
+| Linux | NekoRay | ✅ | ✅ | **停更 2024-12** |
+| Android | **NekoBox for Android** | ✅ | ✅ | 首选；自带大陆分流预设 |
+| Android | **v2rayNG** | ✅ | ❌ | 极稳；仅 VLESS |
+| Android | **FlClash** | ✅ | ✅ | 备选 |
+| Android | **Karing** | ✅ | ✅ | 备选，易用 |
 | Android | Hiddify | ✅ | ✅ | Flutter |
-| iOS | **Karing** | ✅ | ✅ | 首选 |
-| iOS | **sing-box（SFI）** | ✅ | ✅ | 官方、免费 |
-| iOS | Shadowrocket | ✅ | ✅ | 付费；以最新版为准 |
-| OpenWrt | **mihomo / sing-box** | ✅ | ✅ | 内核形态，最轻 |
-| 路由器 / OpenWrt | **sing-box / mihomo** | ✅ | ✅ | 直接跑内核；passwall2 用的是 Xray，仅 VLESS |
+| iOS | **Shadowrocket** | ✅ | ✅ | 首选；付费 |
+| iOS | **Karing** | ✅ | ✅ | 备选 |
+| iOS | **sing-box（SFI）** | ✅ | ✅ | 官方、免费、最轻 |
+| OpenWrt | **mihomo** | ✅ | ✅ | 首选 |
+| OpenWrt | **sing-box** | ✅ | ✅ | 备选 |
+| OpenWrt | passwall2 | ✅ | ❌ | Xray；仅 VLESS |
 
 **导入方式**
 
